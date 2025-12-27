@@ -1,5 +1,4 @@
 // Sistema de Tienda Virtual Local
-// store-manager.js
 
 class StoreManager {
     constructor() {
