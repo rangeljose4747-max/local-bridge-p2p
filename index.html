@@ -1,350 +1,50 @@
 <!DOCTYPE html>
-<html lang="es">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Local Bridge P2P - Conexión Directa PC a PC</title>
-    <meta name="description" content="Conecta tu PC directamente con otra PC sin intermediarios">
-    
-    <!-- Open Graph para compartir -->
-    <meta property="og:title" content="Local Bridge P2P">
-    <meta property="og:description" content="Transferencia directa de archivos entre computadoras">
-    <meta property="og:image" content="assets/icons/logo.svg">
-    <meta property="og:url" content="https://tugithub.github.io/local-bridge-p2p">
-    
-    <!-- Favicon -->
-    <link rel="icon" href="assets/icons/favicon.ico" type="image/x-icon">
-    
-    <!-- CSS -->
-    <link rel="stylesheet" href="css/style.css">
-    
-    <!-- Font Awesome para iconos -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-    <!-- Cursor neón personalizado -->
-    <style>
-        body {
-            cursor: none;
-        }
-        .cursor-glow {
-            position: fixed;
-            width: 20px;
-            height: 20px;
-            border-radius: 50%;
-            background: radial-gradient(circle, rgba(157, 78, 221, 0.7) 0%, transparent 70%);
-            pointer-events: none;
-            z-index: 9999;
-            transition: transform 0.1s;
-        }
-    </style>
+    <title>Generar Favicon Neon</title>
 </head>
 <body>
-    <!-- Cursor neón -->
-    <div class="cursor-glow"></div>
-    
-    <!-- Pantalla de inicio -->
-    <div id="start-screen" class="screen active">
-        <div class="logo-container">
-            <img src="assets/icons/logo.svg" alt="Local Bridge P2P Logo" class="logo">
-            <h1>Local Bridge P2P</h1>
-            <p class="subtitle">Conexión directa entre computadoras</p>
-        </div>
-        
-        <div class="options">
-            <button id="btn-host" class="btn-primary">
-                <i class="fas fa-wifi"></i> Crear Sala
-            </button>
-            <button id="btn-join" class="btn-secondary">
-                <i class="fas fa-link"></i> Unirse a Sala
-            </button>
-            <button id="btn-store" class="btn-store">
-                <i class="fas fa-store"></i> Modo Tienda
-            </button>
-        </div>
-        
-        <div class="info-box">
-            <h3><i class="fas fa-info-circle"></i> ¿Cómo funciona?</h3>
-            <ol>
-                <li>1. Crea una sala y comparte el código</li>
-                <li>2. Otro usuario ingresa el código</li>
-                <li>3. Se conectan directamente (PC ↔ PC)</li>
-                <li>4. Transfieren archivos sin intermediarios</li>
-            </ol>
-            <p class="warning">
-                <i class="fas fa-shield-alt"></i> Los archivos NUNCA pasan por servidores externos
-            </p>
-        </div>
-    </div>
-    
-    <!-- Pantalla de creación de sala -->
-    <div id="host-screen" class="screen">
-        <div class="header">
-            <button class="btn-back"><i class="fas fa-arrow-left"></i> Volver</button>
-            <h2><i class="fas fa-wifi"></i> Crear Sala de Conexión</h2>
-        </div>
-        
-        <div class="content">
-            <div class="connection-code">
-                <h3>Código de Sala:</h3>
-                <div id="room-code" class="code-display">Generando...</div>
-                <div id="qrcode-container" class="qrcode"></div>
-                <p class="hint">Comparte este código con la otra persona</p>
-                
-                <div class="connection-options">
-                    <button id="btn-copy-code" class="btn-copy-code">
-                        <i class="fas fa-copy"></i> Copiar Código
-                    </button>
-                    <button id="btn-share-link" class="btn-share-link">
-                        <i class="fas fa-share-alt"></i> Compartir Enlace
-                    </button>
-                </div>
-            </div>
-            
-            <div class="connection-status">
-                <h3>Estado de Conexión:</h3>
-                <div id="connection-state" class="state-disconnected">
-                    <i class="fas fa-plug"></i> Esperando conexión...
-                </div>
-                
-                <div class="connected-peers hidden" id="peers-list">
-                    <h4>Usuarios conectados:</h4>
-                    <ul id="peers-container"></ul>
-                </div>
-            </div>
-            
-            <div class="quick-actions">
-                <h3>Acciones Rápidas:</h3>
-                <button id="btn-chat" class="btn-action" disabled>
-                    <i class="fas fa-comments"></i> Chat
-                </button>
-                <button id="btn-files" class="btn-action" disabled>
-                    <i class="fas fa-folder-open"></i> Compartir Archivos
-                </button>
-                <button id="btn-store-mode" class="btn-action">
-                    <i class="fas fa-store"></i> Configurar Tienda
-                </button>
-            </div>
-        </div>
-    </div>
-    
-    <!-- Pantalla para unirse a sala -->
-    <div id="join-screen" class="screen">
-        <div class="header">
-            <button class="btn-back"><i class="fas fa-arrow-left"></i> Volver</button>
-            <h2><i class="fas fa-link"></i> Unirse a Sala</h2>
-        </div>
-        
-        <div class="content">
-            <div class="input-group">
-                <label for="room-input">
-                    <i class="fas fa-key"></i> Código de la Sala:
-                </label>
-                <input type="text" id="room-input" placeholder="Ej: ABC123-XYZ789" maxlength="20">
-                <button id="btn-connect" class="btn-primary">
-                    <i class="fas fa-plug"></i> Conectar
-                </button>
-            </div>
-            
-            <div class="alternative-connection">
-                <h3>O escanear código QR:</h3>
-                <div class="qr-reader">
-                    <video id="qr-video" width="300" height="200" class="hidden"></video>
-                    <button id="btn-start-qr" class="btn-secondary">
-                        <i class="fas fa-qrcode"></i> Escanear QR
-                    </button>
-                    <div id="qr-result" class="hidden"></div>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <!-- Pantalla de transferencia de archivos -->
-    <div id="transfer-screen" class="screen">
-        <div class="header">
-            <button class="btn-back"><i class="fas fa-arrow-left"></i> Volver</button>
-            <h2><i class="fas fa-exchange-alt"></i> Transferencia de Archivos</h2>
-            <div class="connection-info" id="transfer-info">
-                Conectado a: <span id="peer-name">...</span>
-            </div>
-        </div>
-        
-        <div class="content">
-            <div class="transfer-interface">
-                <div class="file-selector">
-                    <h3><i class="fas fa-folder"></i> Tus Archivos Locales</h3>
-                    <button id="btn-select-files" class="btn-primary">
-                        <i class="fas fa-plus"></i> Seleccionar Archivos
-                    </button>
-                    <button id="btn-select-folder" class="btn-secondary">
-                        <i class="fas fa-folder-plus"></i> Seleccionar Carpeta
-                    </button>
-                    
-                    <div class="file-list" id="local-files">
-                        <p class="empty-message">No hay archivos seleccionados</p>
-                    </div>
-                </div>
-                
-                <div class="transfer-controls">
-                    <button id="btn-send-files" class="btn-send" disabled>
-                        <i class="fas fa-paper-plane"></i> Enviar Archivos
-                    </button>
-                    <button id="btn-set-permissions" class="btn-permissions">
-                        <i class="fas fa-user-lock"></i> Configurar Permisos
-                    </button>
-                    
-                    <div class="transfer-progress hidden" id="transfer-progress">
-                        <div class="progress-bar">
-                            <div class="progress-fill" id="progress-fill"></div>
-                        </div>
-                        <div class="progress-info">
-                            <span id="progress-text">0%</span>
-                            <span id="speed-text">0 KB/s</span>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="received-files">
-                    <h3><i class="fas fa-download"></i> Archivos Recibidos</h3>
-                    <div class="file-list" id="received-files">
-                        <p class="empty-message">No hay archivos recibidos</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <!-- Pantalla de tienda virtual -->
-    <div id="store-screen" class="screen">
-        <div class="header">
-            <button class="btn-back"><i class="fas fa-arrow-left"></i> Volver</button>
-            <h2><i class="fas fa-store"></i> Tienda Virtual Local</h2>
-        </div>
-        
-        <div class="content">
-            <div class="store-setup">
-                <h3>Configurar tu Tienda</h3>
-                <div class="form-group">
-                    <label>Nombre de la Tienda:</label>
-                    <input type="text" id="store-name" placeholder="Mi Tienda Local">
-                </div>
-                
-                <div class="form-group">
-                    <label>Seleccionar Carpeta de Productos:</label>
-                    <button id="btn-select-store-folder" class="btn-secondary">
-                        <i class="fas fa-folder-open"></i> Elegir Carpeta
-                    </button>
-                    <span id="store-folder-path">No seleccionada</span>
-                </div>
-                
-                <div class="currency-selector">
-                    <label>Moneda:</label>
-                    <select id="currency-select">
-                        <option value="USD">USD - Dólares</option>
-                        <option value="VES">VES - Bolívares</option>
-                        <option value="dual">Ambas Monedas</option>
-                    </select>
-                    <input type="number" id="exchange-rate" placeholder="Tasa BCV" step="0.01" class="hidden">
-                </div>
-                
-                <button id="btn-activate-store" class="btn-store">
-                    <i class="fas fa-check"></i> Activar Tienda
-                </button>
-            </div>
-            
-            <div class="store-preview hidden" id="store-preview">
-                <h3>Vista Previa de tu Tienda</h3>
-                <div id="products-grid" class="products-grid">
-                    <!-- Productos cargados automáticamente -->
-                </div>
-                
-                <div class="store-sharing">
-                    <h4>Compartir Tienda:</h4>
-                    <div id="store-qrcode" class="qrcode"></div>
-                    <button id="btn-copy-store-link" class="btn-copy-code">
-                        <i class="fas fa-link"></i> Copiar Enlace de Tienda
-                    </button>
-                </div>
-            </div>
-            
-            <div class="store-cart hidden" id="store-cart">
-                <h3><i class="fas fa-shopping-cart"></i> Carrito de Compras</h3>
-                <div id="cart-items"></div>
-                <div class="cart-total">
-                    <p>Total: <span id="cart-total-amount">$0.00</span></p>
-                    <button id="btn-checkout" class="btn-primary" disabled>
-                        <i class="fas fa-shopping-bag"></i> Solicitar Compra
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <!-- Chat flotante -->
-    <div id="chat-window" class="hidden">
-        <div class="chat-header">
-            <span><i class="fas fa-comments"></i> Chat P2P</span>
-            <button id="btn-close-chat"><i class="fas fa-times"></i></button>
-        </div>
-        <div class="chat-messages" id="chat-messages"></div>
-        <div class="chat-input">
-            <input type="text" id="chat-input" placeholder="Escribe un mensaje...">
-            <button id="btn-send-message"><i class="fas fa-paper-plane"></i></button>
-        </div>
-    </div>
-    
-    <!-- Notificaciones -->
-    <div id="notification-container"></div>
-    
-    <!-- Scripts -->
-    <script src="lib/webrtc-adapter.js"></script>
-    <script src="lib/qrcode.min.js"></script>
-    <script src="js/webrtc-bridge.js"></script>
-    <script src="js/file-transfer.js"></script>
-    <script src="js/store-manager.js"></script>
-    <script src="js/app.js"></script>
-    
+    <canvas id="canvas" width="64" height="64"></canvas>
     <script>
-        // Configuración inicial
-        const CONFIG = {
-            appName: "Local Bridge P2P",
-            version: "1.0.0",
-            stunServers: [
-                "stun:stun.l.google.com:19302",
-                "stun:stun1.l.google.com:19302",
-                "stun:stun2.l.google.com:19302",
-                "stun:stun3.l.google.com:19302"
-            ],
-            maxFileSize: 2 * 1024 * 1024 * 1024, // 2GB
-            chunkSize: 64 * 1024 // 64KB
-        };
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
         
-        // Hacer la configuración global
-        window.APP_CONFIG = CONFIG;
+        // Fondo negro
+        ctx.fillStyle = '#0a0a0a';
+        ctx.fillRect(0, 0, 64, 64);
         
-        // Cursor neón personalizado
-        document.addEventListener('DOMContentLoaded', () => {
-            const cursor = document.querySelector('.cursor-glow');
-            
-            document.addEventListener('mousemove', (e) => {
-                cursor.style.left = e.clientX - 10 + 'px';
-                cursor.style.top = e.clientY - 10 + 'px';
-            });
-            
-            // Efecto hover en elementos interactivos
-            const interactiveElements = document.querySelectorAll('button, a, input, .file-item, .product-card');
-            
-            interactiveElements.forEach(element => {
-                element.addEventListener('mouseenter', () => {
-                    cursor.style.transform = 'scale(1.5)';
-                    cursor.style.background = 'radial-gradient(circle, rgba(0, 255, 255, 0.8) 0%, transparent 70%)';
-                });
-                
-                element.addEventListener('mouseleave', () => {
-                    cursor.style.transform = 'scale(1)';
-                    cursor.style.background = 'radial-gradient(circle, rgba(157, 78, 221, 0.7) 0%, transparent 70%)';
-                });
-            });
-        });
+        // Gradiente neon
+        const gradient = ctx.createLinearGradient(0, 0, 64, 64);
+        gradient.addColorStop(0, '#ff00ff');
+        gradient.addColorStop(0.5, '#00ffff');
+        gradient.addColorStop(1, '#ff00ff');
+        
+        // Dibujar icono de puente neon
+        ctx.strokeStyle = gradient;
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(10, 40);
+        ctx.lineTo(54, 40);
+        ctx.stroke();
+        
+        // Pilares
+        ctx.fillStyle = gradient;
+        ctx.fillRect(20, 25, 3, 15);
+        ctx.fillRect(40, 20, 3, 20);
+        
+        // Puntos de conexión
+        ctx.beginPath();
+        ctx.arc(15, 20, 4, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(49, 20, 4, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Guardar como favicon
+        const link = document.createElement('a');
+        link.download = 'favicon.ico';
+        link.href = canvas.toDataURL('image/x-icon');
+        link.click();
     </script>
 </body>
 </html>
