@@ -1,50 +1,605 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
-    <title>Generar Favicon Neon</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Local Bridge P2P - Tema Neon</title>
+    <meta name="description" content="Conexión P2P directa con tema neon estilo Mega">
+    
+    <!-- Favicon -->
+    <link rel="icon" href="assets/icons/logo.svg" type="image/svg+xml">
+    <link rel="shortcut icon" href="assets/icons/logo.svg">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- CSS -->
+    <link rel="stylesheet" href="css/style.css">
+    
+    <!-- Fuentes modernas -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    
+    <style>
+        /* Estilos adicionales para fuentes neon */
+        h1, h2, h3, .logo-container h1, .header h2 {
+            font-family: 'Orbitron', sans-serif;
+        }
+        
+        .code-display {
+            font-family: 'Orbitron', monospace;
+            text-shadow: 0 0 10px #00ffff, 0 0 20px #00ffff;
+        }
+        
+        /* Animación de fondo neon */
+        .neon-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            opacity: 0.1;
+            background: 
+                radial-gradient(circle at 20% 50%, #ff00ff22 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, #00ffff22 0%, transparent 50%),
+                radial-gradient(circle at 40% 80%, #9d4edd22 0%, transparent 50%);
+            animation: pulse 10s ease-in-out infinite alternate;
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 0.05; }
+            100% { opacity: 0.15; }
+        }
+        
+        /* Efecto brillo para botones */
+        .btn-primary, .btn-store, .btn-send {
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .btn-primary::after, .btn-store::after, .btn-send::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.3) 0%, transparent 70%);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        
+        .btn-primary:hover::after, .btn-store:hover::after, .btn-send:hover::after {
+            opacity: 1;
+        }
+        
+        /* Scrollbar personalizado */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: #1a1a1a;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(180deg, #9d4edd, #00ffff);
+            border-radius: 4px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(180deg, #ff00ff, #00ffff);
+        }
+    </style>
 </head>
 <body>
-    <canvas id="canvas" width="64" height="64"></canvas>
+    <!-- Fondo animado -->
+    <div class="neon-bg"></div>
+    
+    <!-- Pantalla de inicio -->
+    <div id="start-screen" class="screen active">
+        <div class="logo-container">
+            <img src="assets/icons/logo.svg" alt="Local Bridge P2P Logo" class="logo">
+            <h1>LOCAL BRIDGE P2P</h1>
+            <p class="subtitle">Direct peer-to-peer connections with neon style</p>
+        </div>
+        
+        <div class="options">
+            <button id="btn-host" class="btn-primary">
+                <i class="fas fa-satellite-dish"></i> CREAR SALA NEON
+            </button>
+            <button id="btn-join" class="btn-secondary">
+                <i class="fas fa-plug"></i> UNIRSE A SALA
+            </button>
+            <button id="btn-store" class="btn-store">
+                <i class="fas fa-store-alt"></i> TIENDA VIRTUAL
+            </button>
+            
+            <div class="quick-stats">
+                <div class="stat-item">
+                    <i class="fas fa-bolt"></i>
+                    <span>Transferencia P2P Directa</span>
+                </div>
+                <div class="stat-item">
+                    <i class="fas fa-shield-alt"></i>
+                    <span>Cero Intermediarios</span>
+                </div>
+                <div class="stat-item">
+                    <i class="fas fa-rocket"></i>
+                    <span>Velocidad Máxima</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="info-box">
+            <h3><i class="fas fa-info-circle"></i> ¿CÓMO FUNCIONA?</h3>
+            <ol>
+                <li><span class="neon-text">1.</span> Crea una sala y comparte el código neon</li>
+                <li><span class="neon-text">2.</span> Otro usuario ingresa el código</li>
+                <li><span class="neon-text">3.</span> Conexión P2P directa establecida</li>
+                <li><span class="neon-text">4.</span> Transfiere archivos directamente (PC ↔ PC)</li>
+            </ol>
+            <p class="warning">
+                <i class="fas fa-user-secret"></i> <strong>100% PRIVADO:</strong> Los archivos NUNCA pasan por servidores externos
+            </p>
+        </div>
+        
+        <div class="tech-stack">
+            <span class="tech-tag">
+                <i class="fas fa-broadcast-tower"></i> WebRTC
+            </span>
+            <span class="tech-tag">
+                <i class="fas fa-lock"></i> Encriptación E2E
+            </span>
+            <span class="tech-tag">
+                <i class="fas fa-bolt"></i> Transferencia Directa
+            </span>
+            <span class="tech-tag">
+                <i class="fas fa-qrcode"></i> Códigos QR
+            </span>
+        </div>
+    </div>
+    
+    <!-- Pantalla de creación de sala -->
+    <div id="host-screen" class="screen">
+        <div class="header">
+            <button class="btn-back"><i class="fas fa-arrow-left"></i> VOLVER</button>
+            <h2><i class="fas fa-satellite-dish"></i> SALA NEON</h2>
+            <div class="header-actions">
+                <button id="btn-neon-effect" class="btn-action-small">
+                    <i class="fas fa-palette"></i> NEON
+                </button>
+            </div>
+        </div>
+        
+        <div class="content">
+            <div class="room-creation">
+                <div class="section-title">
+                    <i class="fas fa-key"></i> CÓDIGO DE ACCESO NEON
+                </div>
+                
+                <div class="connection-code">
+                    <div id="room-code" class="code-display">GENERANDO...</div>
+                    <div id="qrcode-container" class="qrcode"></div>
+                    
+                    <div class="code-actions">
+                        <button id="btn-copy-code" class="btn-copy-code">
+                            <i class="fas fa-copy"></i> COPIAR CÓDIGO
+                        </button>
+                        <button id="btn-share-link" class="btn-share-link">
+                            <i class="fas fa-share-alt"></i> COMPARTIR ENLACE
+                        </button>
+                        <button id="btn-refresh-code" class="btn-action-small">
+                            <i class="fas fa-redo"></i> NUEVO CÓDIGO
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="connection-status">
+                    <div class="status-header">
+                        <i class="fas fa-signal"></i> ESTADO DE CONEXIÓN
+                    </div>
+                    <div id="connection-state" class="state-disconnected">
+                        <div class="status-indicator"></div>
+                        <span>ESPERANDO CONEXIÓN...</span>
+                    </div>
+                    
+                    <div class="peers-section hidden" id="peers-section">
+                        <div class="peers-header">
+                            <i class="fas fa-users"></i> USUARIOS CONECTADOS
+                        </div>
+                        <div class="peers-grid" id="peers-container">
+                            <!-- Se llena dinámicamente -->
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="quick-actions-grid">
+                    <button id="btn-chat" class="btn-action" disabled>
+                        <i class="fas fa-comment-dots"></i> CHAT NEON
+                    </button>
+                    <button id="btn-files" class="btn-action" disabled>
+                        <i class="fas fa-folder-open"></i> ARCHIVOS
+                    </button>
+                    <button id="btn-settings" class="btn-action">
+                        <i class="fas fa-cog"></i> CONFIGURACIÓN
+                    </button>
+                    <button id="btn-security" class="btn-action">
+                        <i class="fas fa-shield-alt"></i> SEGURIDAD
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Pantalla para unirse a sala -->
+    <div id="join-screen" class="screen">
+        <div class="header">
+            <button class="btn-back"><i class="fas fa-arrow-left"></i> VOLVER</button>
+            <h2><i class="fas fa-plug"></i> UNIRSE A SALA</h2>
+        </div>
+        
+        <div class="content">
+            <div class="join-section">
+                <div class="input-group-neon">
+                    <label for="room-input">
+                        <i class="fas fa-key"></i> INGRESA EL CÓDIGO NEON:
+                    </label>
+                    <div class="input-wrapper">
+                        <input type="text" id="room-input" placeholder="EJ: X7G9-2K4P-R5M8" maxlength="20">
+                        <div class="input-decoration"></div>
+                    </div>
+                    <button id="btn-connect" class="btn-primary">
+                        <i class="fas fa-link"></i> CONECTAR P2P
+                    </button>
+                </div>
+                
+                <div class="qr-section">
+                    <div class="section-title">
+                        <i class="fas fa-qrcode"></i> ESCANEAR CÓDIGO QR
+                    </div>
+                    <div class="qr-reader">
+                        <div class="qr-placeholder" id="qr-placeholder">
+                            <i class="fas fa-camera"></i>
+                            <p>Haz clic para escanear código QR</p>
+                        </div>
+                        <video id="qr-video" class="hidden"></video>
+                        <button id="btn-start-qr" class="btn-secondary">
+                            <i class="fas fa-qrcode"></i> ACTIVAR CÁMARA
+                        </button>
+                        <div id="qr-result" class="hidden"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Pantalla de transferencia de archivos -->
+    <div id="transfer-screen" class="screen">
+        <div class="header">
+            <button class="btn-back"><i class="fas fa-arrow-left"></i> VOLVER</button>
+            <h2><i class="fas fa-exchange-alt"></i> TRANSFERENCIA NEON</h2>
+            <div class="connection-info">
+                <i class="fas fa-user"></i>
+                <span id="peer-name">Usuario Desconocido</span>
+                <div class="connection-dot connected"></div>
+            </div>
+        </div>
+        
+        <div class="content">
+            <div class="transfer-interface">
+                <div class="file-section">
+                    <div class="section-header">
+                        <i class="fas fa-folder-open"></i> TUS ARCHIVOS LOCALES
+                    </div>
+                    
+                    <div class="file-actions">
+                        <button id="btn-select-files" class="btn-action">
+                            <i class="fas fa-plus"></i> AGREGAR ARCHIVOS
+                        </button>
+                        <button id="btn-select-folder" class="btn-action">
+                            <i class="fas fa-folder-plus"></i> AGREGAR CARPETA
+                        </button>
+                        <button id="btn-clear-files" class="btn-action">
+                            <i class="fas fa-trash"></i> LIMPIAR LISTA
+                        </button>
+                    </div>
+                    
+                    <div class="file-list-container">
+                        <div class="file-list-header">
+                            <span>NOMBRE</span>
+                            <span>TAMAÑO</span>
+                            <span>ESTADO</span>
+                        </div>
+                        <div class="file-list" id="local-files">
+                            <div class="empty-state">
+                                <i class="fas fa-cloud-upload-alt"></i>
+                                <p>Arrastra archivos o haz clic en "Agregar Archivos"</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="transfer-section">
+                    <div class="transfer-controls">
+                        <button id="btn-send-files" class="btn-send" disabled>
+                            <i class="fas fa-paper-plane"></i> ENVIAR ARCHIVOS
+                        </button>
+                        <button id="btn-set-permissions" class="btn-permissions">
+                            <i class="fas fa-user-lock"></i> PERMISOS
+                        </button>
+                        
+                        <div class="transfer-stats">
+                            <div class="stat">
+                                <i class="fas fa-file"></i>
+                                <span id="file-count">0 archivos</span>
+                            </div>
+                            <div class="stat">
+                                <i class="fas fa-hdd"></i>
+                                <span id="total-size">0 MB</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="progress-container hidden" id="transfer-progress">
+                        <div class="progress-header">
+                            <span>TRANSFIRIENDO...</span>
+                            <span id="progress-percent">0%</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="progress-fill"></div>
+                        </div>
+                        <div class="progress-info">
+                            <div class="info-item">
+                                <i class="fas fa-tachometer-alt"></i>
+                                <span id="speed-text">0 KB/s</span>
+                            </div>
+                            <div class="info-item">
+                                <i class="fas fa-clock"></i>
+                                <span id="time-remaining">--:--</span>
+                            </div>
+                            <div class="info-item">
+                                <i class="fas fa-database"></i>
+                                <span id="transferred-size">0 MB</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="received-section">
+                    <div class="section-header">
+                        <i class="fas fa-download"></i> ARCHIVOS RECIBIDOS
+                    </div>
+                    <div class="file-list-container">
+                        <div class="file-list" id="received-files">
+                            <div class="empty-state">
+                                <i class="fas fa-inbox"></i>
+                                <p>Los archivos recibidos aparecerán aquí</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Chat flotante neon -->
+    <div id="chat-window" class="hidden">
+        <div class="chat-header">
+            <div class="chat-title">
+                <i class="fas fa-comments"></i>
+                <span>CHAT P2P NEON</span>
+            </div>
+            <div class="chat-actions">
+                <button class="chat-btn" id="btn-minimize-chat">
+                    <i class="fas fa-minus"></i>
+                </button>
+                <button class="chat-btn" id="btn-close-chat">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        </div>
+        <div class="chat-messages" id="chat-messages">
+            <div class="welcome-message">
+                <div class="message-content">
+                    <p>Chat P2P conectado ✓</p>
+                    <p class="small-text">Los mensajes son privados y directos</p>
+                </div>
+            </div>
+        </div>
+        <div class="chat-input-area">
+            <input type="text" id="chat-input" placeholder="Escribe un mensaje...">
+            <button id="btn-send-message" class="btn-send-chat">
+                <i class="fas fa-paper-plane"></i>
+            </button>
+        </div>
+    </div>
+    
+    <!-- Notificaciones neon -->
+    <div id="notification-container"></div>
+    
+    <!-- Scripts -->
+    <script src="lib/webrtc-adapter.js"></script>
+    <script src="lib/qrcode.min.js"></script>
+    <script src="js/webrtc-bridge.js"></script>
+    <script src="js/file-transfer.js"></script>
+    <script src="js/store-manager.js"></script>
+    <script src="js/app.js"></script>
+    
+    <!-- Inicialización con tema neon -->
     <script>
-        const canvas = document.getElementById('canvas');
-        const ctx = canvas.getContext('2d');
+        // Configuración del tema neon
+        const NEON_CONFIG = {
+            theme: 'neon-dark',
+            colors: {
+                purple: '#9d4edd',
+                cyan: '#00ffff',
+                pink: '#ff00ff',
+                green: '#00ff00',
+                yellow: '#ffff00'
+            },
+            effects: {
+                glow: true,
+                animations: true,
+                particles: true
+            },
+            sounds: {
+                enabled: false,
+                volume: 0.3
+            }
+        };
         
-        // Fondo negro
-        ctx.fillStyle = '#0a0a0a';
-        ctx.fillRect(0, 0, 64, 64);
+        // Detectar preferencia de tema del sistema
+        const prefersDarkScheme = window.matchMedia('(prefers-color-scheme: dark)');
+        if (!prefersDarkScheme.matches) {
+            document.documentElement.style.setProperty('--bg-dark', '#0a0a0a');
+        }
         
-        // Gradiente neon
-        const gradient = ctx.createLinearGradient(0, 0, 64, 64);
-        gradient.addColorStop(0, '#ff00ff');
-        gradient.addColorStop(0.5, '#00ffff');
-        gradient.addColorStop(1, '#ff00ff');
+        // Aplicar tema neon al cargar
+        document.addEventListener('DOMContentLoaded', function() {
+            // Añadir clase de tema
+            document.body.classList.add('neon-theme');
+            
+            // Inicializar efectos visuales
+            initializeNeonEffects();
+            
+            // Iniciar aplicación
+            window.app = new LocalBridgeApp();
+        });
         
-        // Dibujar icono de puente neon
-        ctx.strokeStyle = gradient;
-        ctx.lineWidth = 3;
-        ctx.beginPath();
-        ctx.moveTo(10, 40);
-        ctx.lineTo(54, 40);
-        ctx.stroke();
+        function initializeNeonEffects() {
+            // Efecto de brillo en hover para botones
+            const buttons = document.querySelectorAll('.btn-primary, .btn-store, .btn-send');
+            buttons.forEach(btn => {
+                btn.addEventListener('mouseenter', () => {
+                    btn.style.filter = 'brightness(1.2) drop-shadow(0 0 10px currentColor)';
+                });
+                btn.addEventListener('mouseleave', () => {
+                    btn.style.filter = 'brightness(1)';
+                });
+            });
+            
+            // Efecto de escritura para inputs
+            const inputs = document.querySelectorAll('input[type="text"]');
+            inputs.forEach(input => {
+                input.addEventListener('focus', () => {
+                    input.parentElement.classList.add('focused');
+                });
+                input.addEventListener('blur', () => {
+                    input.parentElement.classList.remove('focused');
+                });
+            });
+            
+            // Efecto de carga para códigos
+            const codeDisplay = document.getElementById('room-code');
+            if (codeDisplay) {
+                codeDisplay.addEventListener('mouseenter', () => {
+                    codeDisplay.style.animation = 'neonPulse 1s infinite alternate';
+                });
+                codeDisplay.addEventListener('mouseleave', () => {
+                    codeDisplay.style.animation = '';
+                });
+            }
+        }
         
-        // Pilares
-        ctx.fillStyle = gradient;
-        ctx.fillRect(20, 25, 3, 15);
-        ctx.fillRect(40, 20, 3, 20);
-        
-        // Puntos de conexión
-        ctx.beginPath();
-        ctx.arc(15, 20, 4, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.beginPath();
-        ctx.arc(49, 20, 4, 0, Math.PI * 2);
-        ctx.fill();
-        
-        // Guardar como favicon
-        const link = document.createElement('a');
-        link.download = 'favicon.ico';
-        link.href = canvas.toDataURL('image/x-icon');
-        link.click();
+        // Estilos CSS dinámicos para efectos neon
+        const neonStyles = document.createElement('style');
+        neonStyles.textContent = `
+            @keyframes neonPulse {
+                0% { text-shadow: 0 0 5px #00ffff, 0 0 10px #00ffff; }
+                100% { text-shadow: 0 0 10px #00ffff, 0 0 20px #00ffff, 0 0 30px #00ffff; }
+            }
+            
+            @keyframes neonBorder {
+                0% { border-color: #9d4edd; }
+                50% { border-color: #00ffff; }
+                100% { border-color: #ff00ff; }
+            }
+            
+            .neon-theme .code-display {
+                animation: neonPulse 2s infinite alternate;
+            }
+            
+            .neon-theme .file-list {
+                border: 1px solid;
+                animation: neonBorder 3s infinite alternate;
+            }
+            
+            .neon-text {
+                color: #00ffff;
+                text-shadow: 0 0 5px #00ffff;
+                font-weight: bold;
+            }
+            
+            .tech-tag {
+                background: rgba(157, 78, 221, 0.1);
+                border: 1px solid #9d4edd;
+                color: #9d4edd;
+                padding: 0.25rem 0.75rem;
+                border-radius: 20px;
+                font-size: 0.85rem;
+                display: inline-flex;
+                align-items: center;
+                gap: 0.25rem;
+                margin: 0.25rem;
+            }
+            
+            .quick-stats {
+                display: grid;
+                grid-template-columns: repeat(3, 1fr);
+                gap: 1rem;
+                margin: 1.5rem 0;
+            }
+            
+            .stat-item {
+                display: flex;
+                align-items: center;
+                gap: 0.5rem;
+                color: #00ffff;
+                font-size: 0.9rem;
+            }
+            
+            .tech-stack {
+                display: flex;
+                justify-content: center;
+                flex-wrap: wrap;
+                margin: 2rem 0;
+            }
+            
+            .input-wrapper {
+                position: relative;
+            }
+            
+            .input-decoration {
+                position: absolute;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                height: 2px;
+                background: linear-gradient(90deg, #9d4edd, #00ffff);
+                transform: scaleX(0);
+                transition: transform 0.3s;
+            }
+            
+            .focused .input-decoration {
+                transform: scaleX(1);
+            }
+            
+            .empty-state {
+                text-align: center;
+                padding: 3rem 2rem;
+                color: #666;
+            }
+            
+            .empty-state i {
+                font-size: 3rem;
+                color: #444;
+                margin-bottom: 1rem;
+            }
+        `;
+        document.head.appendChild(neonStyles);
     </script>
 </body>
 </html>
