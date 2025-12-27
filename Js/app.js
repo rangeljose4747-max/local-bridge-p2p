@@ -1,5 +1,4 @@
-// Aplicación principal Local Bridge P2P con tema neón
-
+// app.js mejorado
 class LocalBridgeApp {
     constructor() {
         this.screens = {
@@ -15,10 +14,11 @@ class LocalBridgeApp {
         this.activeRoom = null;
         this.userName = this.generateRandomName();
         this.fileTransfers = new Map();
+        this.storeManager = new StoreManager();
+        this.fileTransfer = new FileTransferManager();
+        this.webrtcBridge = new WebRTCBridge();
         
-        // Inicializar efectos neón
-        this.initNeonEffects();
-        
+        // Inicializar componentes
         this.initialize();
     }
     
@@ -27,21 +27,44 @@ class LocalBridgeApp {
         this.setupNavigation();
         this.showNotification('Aplicación cargada. Listo para conectar.', 'info');
         
-        // Animación de carga neón
-        this.showLoadingAnimation();
+        // Cargar configuración guardada
+        this.loadSettings();
+        
+        // Verificar compatibilidad
+        this.checkCompatibility();
+        
+        // Inicializar efectos visuales
+        this.initializeEffects();
     }
     
-    initNeonEffects() {
+    checkCompatibility() {
+        const features = {
+            fileAccess: 'showFilePicker' in window,
+            webrtc: 'RTCPeerConnection' in window,
+            serviceWorker: 'serviceWorker' in navigator,
+            notifications: 'Notification' in window
+        };
+        
+        const missing = Object.entries(features)
+            .filter(([key, value]) => !value)
+            .map(([key]) => key);
+        
+        if (missing.length > 0) {
+            this.showNotification(
+                `Tu navegador tiene limitaciones: ${missing.join(', ')}. Usa Chrome/Edge 86+ para mejor experiencia.`,
+                'warning'
+            );
+        }
+    }
+    
+    initializeEffects() {
         // Efecto de neón en títulos
-        const titles = document.querySelectorAll('h1, h2, h3');
-        titles.forEach(title => {
+        document.querySelectorAll('h1, h2, h3').forEach(title => {
             title.style.textShadow = '0 0 10px rgba(157, 78, 221, 0.8)';
         });
         
-        // Efecto de neón en botones
-        const buttons = document.querySelectorAll('button');
-        buttons.forEach(button => {
-            button.style.transition = 'all 0.3s ease';
+        // Efecto hover en botones
+        document.querySelectorAll('button').forEach(button => {
             button.addEventListener('mouseenter', () => {
                 button.style.boxShadow = '0 0 15px rgba(157, 78, 221, 0.6)';
             });
@@ -50,491 +73,328 @@ class LocalBridgeApp {
             });
         });
         
-        // Efecto de neón en campos de entrada
-        const inputs = document.querySelectorAll('input, select');
-        inputs.forEach(input => {
-            input.style.transition = 'all 0.3s ease';
-            input.addEventListener('focus', () => {
-                input.style.boxShadow = '0 0 15px rgba(0, 255, 255, 0.5)';
-            });
-            input.addEventListener('blur', () => {
-                input.style.boxShadow = '';
-            });
-        });
-    }
-    
-    showLoadingAnimation() {
-        const loading = document.createElement('div');
-        loading.className = 'loading-neon';
-        loading.innerHTML = `
-            <div class="loader">
-                <div class="circle"></div>
-                <div class="circle"></div>
-                <div class="circle"></div>
-            </div>
-        `;
-        document.body.appendChild(loading);
-        
+        // Animación de entrada
+        document.body.style.opacity = '0';
         setTimeout(() => {
-            loading.remove();
-        }, 1500);
+            document.body.style.transition = 'opacity 1s ease';
+            document.body.style.opacity = '1';
+        }, 100);
     }
     
     bindEvents() {
-        // Botones principales
-        document.getElementById('btn-host').addEventListener('click', () => this.createRoom());
-        document.getElementById('btn-join').addEventListener('click', () => this.showJoinScreen());
-        document.getElementById('btn-store').addEventListener('click', () => this.showStoreScreen());
+        // Navegación entre pantallas
+        document.getElementById('btn-host').addEventListener('click', () => this.showScreen('host'));
+        document.getElementById('btn-join').addEventListener('click', () => this.showScreen('join'));
+        document.getElementById('btn-store').addEventListener('click', () => this.showScreen('store'));
         
         // Botones de navegación
         document.querySelectorAll('.btn-back').forEach(btn => {
             btn.addEventListener('click', () => this.showScreen('start'));
         });
         
-        // Conexión
-        document.getElementById('btn-connect').addEventListener('click', () => this.joinRoom());
+        // Crear sala
+        document.getElementById('btn-refresh-code').addEventListener('click', () => this.generateRoomCode());
         document.getElementById('btn-copy-code').addEventListener('click', () => this.copyRoomCode());
+        document.getElementById('btn-share-link').addEventListener('click', () => this.shareRoomLink());
         
-        // Transferencia de archivos
+        // Unirse a sala
+        document.getElementById('btn-connect').addEventListener('click', () => this.joinRoom());
+        document.getElementById('btn-start-qr').addEventListener('click', () => this.startQRScanner());
+        
+        // Archivos
         document.getElementById('btn-select-files').addEventListener('click', () => this.selectFiles());
-        document.getElementById('btn-send-files').addEventListener('click', () => this.sendSelectedFiles());
+        document.getElementById('btn-select-folder').addEventListener('click', () => this.selectFolder());
+        document.getElementById('btn-clear-files').addEventListener('click', () => this.clearFiles());
+        document.getElementById('btn-send-files').addEventListener('click', () => this.sendFiles());
         
         // Chat
-        document.getElementById('btn-close-chat').addEventListener('click', () => this.toggleChat(false));
+        document.getElementById('btn-chat').addEventListener('click', () => this.toggleChat());
         document.getElementById('btn-send-message').addEventListener('click', () => this.sendMessage());
-        document.getElementById('chat-input').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') this.sendMessage();
-        });
+        document.getElementById('btn-minimize-chat').addEventListener('click', () => this.minimizeChat());
+        document.getElementById('btn-close-chat').addEventListener('click', () => this.closeChat());
         
-        // Tienda
-        document.getElementById('btn-activate-store').addEventListener('click', () => this.activateStore());
-        document.getElementById('btn-select-store-folder').addEventListener('click', () => this.selectStoreFolder());
+        // Configuración
+        document.getElementById('btn-settings').addEventListener('click', () => this.showSettings());
+        document.getElementById('btn-security').addEventListener('click', () => this.showSecurity());
         
-        // Moneda
-        document.getElementById('currency-select').addEventListener('change', (e) => {
-            const exchangeInput = document.getElementById('exchange-rate');
-            exchangeInput.classList.toggle('hidden', e.target.value !== 'dual');
-        });
+        // Eventos de WebRTC
+        this.webrtcBridge.on('connection-success', (data) => this.onConnectionSuccess(data));
+        this.webrtcBridge.on('connection-failed', (data) => this.onConnectionFailed(data));
+        this.webrtcBridge.on('chat-message', (data) => this.onChatMessage(data));
+        this.webrtcBridge.on('file-incoming', (data) => this.onFileIncoming(data));
+        this.webrtcBridge.on('file-progress', (data) => this.onFileProgress(data));
+        this.webrtcBridge.on('file-received', (data) => this.onFileReceived(data));
+        
+        // Eventos de transferencia de archivos
+        this.fileTransfer.on('transfer-progress', (data) => this.onTransferProgress(data));
+        this.fileTransfer.on('transfer-complete', (data) => this.onTransferComplete(data));
+        this.fileTransfer.on('file-received', (data) => this.onFileReceived(data));
+        
+        // Eventos de tienda
+        this.storeManager.on('store-activated', (data) => this.onStoreActivated(data));
+        this.storeManager.on('products-loaded', (products) => this.updateProductsGrid(products));
+        this.storeManager.on('cart-updated', (cart) => this.updateCart(cart));
+        
+        // Drag and drop
+        this.setupDragAndDrop();
+        
+        // Resize observer para chat
+        this.setupResizeObserver();
     }
     
     setupNavigation() {
-        // Interceptar clicks en botones de acción
-        document.querySelectorAll('[data-screen]').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const screen = e.target.dataset.screen;
-                if (screen) this.showScreen(screen);
-            });
+        // Ocultar todas las pantallas excepto la actual
+        Object.keys(this.screens).forEach(screenName => {
+            if (screenName !== this.currentScreen) {
+                this.screens[screenName].classList.remove('active');
+            }
         });
+        
+        // Mostrar pantalla actual
+        this.screens[this.currentScreen].classList.add('active');
     }
     
     showScreen(screenName) {
-        // Ocultar todas las pantallas
-        Object.values(this.screens).forEach(screen => {
-            screen.classList.remove('active');
-        });
+        if (!this.screens[screenName]) return;
         
-        // Mostrar pantalla solicitada
-        if (this.screens[screenName]) {
-            this.screens[screenName].classList.add('active');
-            this.currentScreen = screenName;
-            
-            // Ejecutar acciones específicas de pantalla
-            switch(screenName) {
-                case 'host':
-                    this.initializeHostScreen();
-                    break;
-                case 'transfer':
-                    this.initializeTransferScreen();
-                    break;
-                case 'store':
-                    this.initializeStoreScreen();
-                    break;
-            }
-        }
+        // Ocultar pantalla actual
+        this.screens[this.currentScreen].classList.remove('active');
+        
+        // Mostrar nueva pantalla
+        this.currentScreen = screenName;
+        this.screens[this.currentScreen].classList.add('active');
+        
+        // Actualizar UI según pantalla
+        this.updateUIForScreen(screenName);
     }
     
-    // Generación de sala
-    async createRoom() {
-        try {
-            this.showScreen('host');
-            
-            // Generar código de sala único
-            this.activeRoom = this.generateRoomCode();
-            document.getElementById('room-code').textContent = this.activeRoom;
-            
-            // Generar QR
-            const qrContainer = document.getElementById('qrcode-container');
-            qrContainer.innerHTML = '';
-            
-            const roomData = {
-                room: this.activeRoom,
-                type: 'local-bridge-p2p',
-                timestamp: Date.now(),
-                host: this.userName
-            };
-            
-            new QRCode(qrContainer, {
-                text: JSON.stringify(roomData),
-                width: 256,
-                height: 256,
-                colorDark: '#9d4edd',
-                colorLight: '#0a0a0a',
-                correctLevel: QRCode.CorrectLevel.H
-            });
-            
-            // Efecto neón en el código QR
-            qrContainer.querySelector('canvas').style.filter = 'drop-shadow(0 0 10px rgba(157, 78, 221, 0.7))';
-            
-            // Iniciar WebRTC para esperar conexiones
-            await this.initializeWebRTC(true);
-            
-            this.showNotification('Sala creada. Comparte el código con quien quieras conectar.', 'success');
-            
-        } catch (error) {
-            console.error('Error creando sala:', error);
-            this.showNotification('Error al crear la sala', 'error');
+    updateUIForScreen(screenName) {
+        switch (screenName) {
+            case 'host':
+                this.generateRoomCode();
+                break;
+            case 'join':
+                // Limpiar campo de código
+                document.getElementById('room-input').value = '';
+                break;
+            case 'transfer':
+                // Actualizar lista de archivos
+                this.updateFileList();
+                break;
+            case 'store':
+                // Actualizar productos
+                this.updateProductsGrid(this.storeManager.products);
+                break;
         }
     }
     
     generateRoomCode() {
-        const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // Sin caracteres ambiguos
+        const code = this.generateRandomCode();
+        document.getElementById('room-code').textContent = code;
+        
+        // Generar código QR
+        const qrContainer = document.getElementById('qrcode-container');
+        qrContainer.innerHTML = '';
+        
+        new QRCode(qrContainer, {
+            text: code,
+            width: 200,
+            height: 200,
+            colorDark: '#9d4edd',
+            colorLight: '#ffffff',
+            correctLevel: QRCode.CorrectLevel.H
+        });
+        
+        this.currentRoomCode = code;
+        return code;
+    }
+    
+    generateRandomCode() {
+        const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
         let code = '';
-        for (let i = 0; i < 9; i++) {
-            if (i > 0 && i % 3 === 0) code += '-';
+        for (let i = 0; i < 8; i++) {
+            if (i > 0 && i % 4 === 0) code += '-';
             code += chars.charAt(Math.floor(Math.random() * chars.length));
         }
         return code;
     }
     
-    generateRandomName() {
-        const adjectives = ['Rápido', 'Seguro', 'Local', 'Directo', 'Privado', 'Digital'];
-        const nouns = ['Puente', 'Conexión', 'Enlace', 'Portal', 'Túnel', 'Red'];
-        const adj = adjectives[Math.floor(Math.random() * adjectives.length)];
-        const noun = nouns[Math.floor(Math.random() * nouns.length)];
-        return `${adj} ${noun}`;
+    copyRoomCode() {
+        const code = document.getElementById('room-code').textContent;
+        navigator.clipboard.writeText(code).then(() => {
+            this.showNotification('Código copiado al portapapeles', 'success');
+        }).catch(() => {
+            this.showNotification('Error al copiar el código', 'error');
+        });
     }
     
-    // Unirse a sala
+    shareRoomLink() {
+        const code = document.getElementById('room-code').textContent;
+        const url = `${window.location.origin}${window.location.pathname}?room=${code}`;
+        
+        if (navigator.share) {
+            navigator.share({
+                title: 'Únete a mi sala Local Bridge P2P',
+                text: `Únete a mi sala usando el código: ${code}`,
+                url: url
+            });
+        } else {
+            // Fallback: copiar al portapapeles
+            navigator.clipboard.writeText(url).then(() => {
+                this.showNotification('Enlace copiado al portapapeles', 'success');
+            });
+        }
+    }
+    
     async joinRoom() {
         const roomCode = document.getElementById('room-input').value.trim();
-        
         if (!roomCode) {
-            this.showNotification('Ingresa un código de sala', 'error');
+            this.showNotification('Por favor ingresa un código de sala', 'warning');
             return;
         }
         
         try {
-            this.activeRoom = roomCode;
+            // Crear conexión WebRTC
+            const result = await this.webrtcBridge.joinConnection(roomCode, '');
             
-            // Conectar via WebRTC
-            await this.initializeWebRTC(false);
-            
-            this.showScreen('transfer');
-            this.showNotification('Conectado a la sala', 'success');
-            
+            if (result.success) {
+                this.activeRoom = roomCode;
+                this.showScreen('transfer');
+                this.showNotification('Conexión establecida', 'success');
+            } else {
+                this.showNotification('Error al conectar', 'error');
+            }
         } catch (error) {
             console.error('Error uniéndose a sala:', error);
-            this.showNotification('Error al conectar', 'error');
+            this.showNotification('Error al conectar: ' + error.message, 'error');
         }
     }
     
-    showJoinScreen() {
-        this.showScreen('join');
-    }
-    
-    showStoreScreen() {
-        this.showScreen('store');
-    }
-    
-    // WebRTC
-    async initializeWebRTC(isHost) {
-        // Esta función se implementaría con webrtc-bridge.js
-        console.log(`Inicializando WebRTC como ${isHost ? 'host' : 'guest'}`);
-        
-        // Por ahora, simulamos una conexión exitosa después de 2 segundos
-        setTimeout(() => {
-            this.onConnectionEstablished();
-        }, 2000);
-    }
-    
-    onConnectionEstablished() {
-        const stateElement = document.getElementById('connection-state');
-        stateElement.className = 'state-connected';
-        stateElement.innerHTML = 
-            '<i class="fas fa-check-circle"></i> Conectado P2P';
-        
-        // Efecto neón en el estado de conexión
-        stateElement.style.animation = 'neon-pulse 2s infinite';
-        
-        // Habilitar botones con efecto neón
-        document.querySelectorAll('.btn-action').forEach(btn => {
-            btn.disabled = false;
-            btn.classList.add('neon-pulse');
-        });
-        
-        // Mostrar chat automáticamente
-        this.toggleChat(true);
-        
-        this.showNotification('Conexión P2P establecida directamente entre PCs', 'success');
-    }
-    
-    // Manejo de archivos
-    async selectFiles() {
+    async startQRScanner() {
         try {
-            const fileHandles = await window.showOpenFilePicker({
-                multiple: true,
-                types: [{
-                    description: 'Todos los archivos',
-                    accept: {'*/*': ['.*']}
-                }]
+            const video = document.getElementById('qr-video');
+            const qrPlaceholder = document.getElementById('qr-placeholder');
+            
+            // Solicitar permisos de cámara
+            const stream = await navigator.mediaDevices.getUserMedia({ 
+                video: { facingMode: 'environment' } 
             });
             
-            const filesList = document.getElementById('local-files');
-            filesList.innerHTML = '';
+            video.srcObject = stream;
+            video.classList.remove('hidden');
+            qrPlaceholder.classList.add('hidden');
             
-            for (const fileHandle of fileHandles) {
-                const file = await fileHandle.getFile();
-                this.addFileToList(file);
-            }
+            // Iniciar escaneo (simulado)
+            this.showNotification('Escaneando código QR...', 'info');
             
-            // Habilitar botón de enviar
-            document.getElementById('btn-send-files').disabled = false;
+            // En una implementación real, aquí iría la lógica de escaneo QR
+            setTimeout(() => {
+                video.classList.add('hidden');
+                qrPlaceholder.classList.remove('hidden');
+                stream.getTracks().forEach(track => track.stop());
+                this.showNotification('Código QR escaneado', 'success');
+            }, 3000);
             
         } catch (error) {
-            if (error.name !== 'AbortError') {
-                console.error('Error seleccionando archivos:', error);
-                this.showNotification('Error al seleccionar archivos', 'error');
-            }
+            console.error('Error accediendo a la cámara:', error);
+            this.showNotification('Error al acceder a la cámara', 'error');
         }
     }
     
-    addFileToList(file) {
-        const filesList = document.getElementById('local-files');
+    selectFiles() {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.multiple = true;
+        input.accept = '*/*';
         
-        const fileItem = document.createElement('div');
-        fileItem.className = 'file-item';
-        fileItem.dataset.fileId = Date.now() + Math.random();
+        input.addEventListener('change', (e) => {
+            this.addFilesToQueue(e.target.files);
+        });
         
-        fileItem.innerHTML = `
+        input.click();
+    }
+    
+    selectFolder() {
+        if (!window.showDirectoryPicker) {
+            this.showNotification('Tu navegador no soporta selección de carpetas', 'warning');
+            return;
+        }
+        
+        window.showDirectoryPicker().then(dir => {
+            this.scanDirectoryForFiles(dir);
+        }).catch(err => {
+            console.error('Error seleccionando carpeta:', err);
+            this.showNotification('Error al seleccionar carpeta', 'error');
+        });
+    }
+    
+    async scanDirectoryForFiles(dir) {
+        const files = [];
+        
+        async function scanDirectory(directory) {
+            for await (const entry of directory.values()) {
+                if (entry.kind === 'file') {
+                    const file = await entry.getFile();
+                    files.push(file);
+                } else if (entry.kind === 'directory') {
+                    await scanDirectory(entry);
+                }
+            }
+        }
+        
+        await scanDirectory(dir);
+        this.addFilesToQueue(files);
+    }
+    
+    addFilesToQueue(files) {
+        const fileList = document.getElementById('local-files');
+        
+        // Si es la primera vez, limpiar el estado vacío
+        if (fileList.querySelector('.empty-state')) {
+            fileList.innerHTML = '';
+        }
+        
+        Array.from(files).forEach(file => {
+            const fileElement = this.createFileElement(file);
+            fileList.appendChild(fileElement);
+        });
+        
+        this.updateTransferStats();
+    }
+    
+    createFileElement(file) {
+        const fileElement = document.createElement('div');
+        fileElement.className = 'file-item';
+        fileElement.dataset.fileName = file.name;
+        fileElement.dataset.fileSize = file.size;
+        
+        const icon = this.getFileIcon(file.type);
+        
+        fileElement.innerHTML = `
             <div class="file-info">
-                <i class="fas fa-file file-icon"></i>
+                <i class="${icon}"></i>
                 <div>
                     <div class="file-name">${file.name}</div>
                     <div class="file-size">${this.formatFileSize(file.size)}</div>
                 </div>
             </div>
-            <button class="btn-remove-file">
-                <i class="fas fa-times"></i>
-            </button>
+            <div class="file-status">Listo</div>
         `;
         
-        // Agregar evento para eliminar archivo
-        fileItem.querySelector('.btn-remove-file').addEventListener('click', () => {
-            fileItem.remove();
-            this.checkFilesList();
-        });
-        
-        filesList.appendChild(fileItem);
+        return fileElement;
     }
     
-    checkFilesList() {
-        const filesList = document.getElementById('local-files');
-        const isEmpty = filesList.children.length === 0;
-        
-        document.getElementById('btn-send-files').disabled = isEmpty;
-        
-        if (isEmpty) {
-            filesList.innerHTML = '<p class="empty-message">No hay archivos seleccionados</p>';
-        }
+    getFileIcon(fileType) {
+        if (fileType.startsWith('image/')) return 'fas fa-image';
+        if (fileType.startsWith('video/')) return 'fas fa-video';
+        if (fileType.startsWith('audio/')) return 'fas fa-music';
+        if (fileType.includes('pdf')) return 'fas fa-file-pdf';
+        if (fileType.includes('zip') || fileType.includes('rar')) return 'fas fa-file-archive';
+        if (fileType.includes('doc') || fileType.includes('docx')) return 'fas fa-file-word';
+        if (fileType.includes('xls') || fileType.includes('xlsx')) return 'fas fa-file-excel';
+        return 'fas fa-file';
     }
     
-    async sendSelectedFiles() {
-        // Implementar envío real via WebRTC
-        this.showNotification('Enviando archivos directamente al peer...', 'info');
-        
-        // Simular progreso con efecto neón
-        this.showTransferProgress();
-        
-        setTimeout(() => {
-            this.showNotification('Archivos enviados exitosamente', 'success');
-            this.hideTransferProgress();
-        }, 3000);
-    }
-    
-    showTransferProgress() {
-        const progress = document.getElementById('transfer-progress');
-        progress.classList.remove('hidden');
-        
-        // Simular progreso con efecto neón
-        let percent = 0;
-        const interval = setInterval(() => {
-            percent += 5;
-            const progressFill = document.getElementById('progress-fill');
-            progressFill.style.width = `${percent}%`;
-            progressFill.style.background = `linear-gradient(90deg, #9d4edd, #00ffff)`;
-            document.getElementById('progress-text').textContent = `${percent}%`;
-            
-            if (percent >= 100) {
-                clearInterval(interval);
-            }
-        }, 100);
-    }
-    
-    hideTransferProgress() {
-        const progress = document.getElementById('transfer-progress');
-        progress.classList.add('hidden');
-        document.getElementById('progress-fill').style.width = '0%';
-        document.getElementById('progress-text').textContent = '0%';
-    }
-    
-    // Chat
-    toggleChat(show) {
-        const chatWindow = document.getElementById('chat-window');
-        if (show) {
-            chatWindow.classList.remove('hidden');
-            // Efecto neón en el chat
-            chatWindow.style.boxShadow = '0 0 20px rgba(157, 78, 221, 0.5)';
-        } else {
-            chatWindow.classList.add('hidden');
-        }
-    }
-    
-    sendMessage() {
-        const input = document.getElementById('chat-input');
-        const message = input.value.trim();
-        
-        if (!message) return;
-        
-        // Agregar mensaje localmente con efecto neón
-        this.addMessageToChat(message, true);
-        
-        // Enviar via WebRTC (simulado por ahora)
-        console.log('Enviando mensaje via P2P:', message);
-        
-        // Simular respuesta después de 1 segundo
-        setTimeout(() => {
-            this.addMessageToChat('Mensaje recibido via P2P', false);
-        }, 1000);
-        
-        input.value = '';
-    }
-    
-    addMessageToChat(message, isSent) {
-        const messagesContainer = document.getElementById('chat-messages');
-        const messageDiv = document.createElement('div');
-        
-        messageDiv.className = `message ${isSent ? 'sent' : 'received'}`;
-        messageDiv.textContent = message;
-        
-        // Efecto neón en mensajes enviados
-        if (isSent) {
-            messageDiv.style.boxShadow = '0 0 10px rgba(157, 78, 221, 0.3)';
-        }
-        
-        messagesContainer.appendChild(messageDiv);
-        messagesContainer.scrollTop = messagesContainer.scrollHeight;
-    }
-    
-    // Tienda
-    async selectStoreFolder() {
-        try {
-            const directoryHandle = await window.showDirectoryPicker();
-            const pathElement = document.getElementById('store-folder-path');
-            pathElement.textContent = directoryHandle.name;
-            pathElement.dataset.handle = 'selected';
-            
-            // Escanear carpeta para productos
-            await this.scanFolderForProducts(directoryHandle);
-            
-        } catch (error) {
-            if (error.name !== 'AbortError') {
-                this.showNotification('Error seleccionando carpeta', 'error');
-            }
-        }
-    }
-    
-    async scanFolderForProducts(directoryHandle) {
-        // Implementar escaneo de carpeta
-        this.showNotification('Escaneando carpeta para productos...', 'info');
-        
-        // Por ahora, mostrar productos de ejemplo
-        setTimeout(() => {
-            this.displaySampleProducts();
-        }, 1500);
-    }
-    
-    displaySampleProducts() {
-        const productsGrid = document.getElementById('products-grid');
-        productsGrid.innerHTML = '';
-        
-        const sampleProducts = [
-            { name: 'Producto 1', price: 25.99, image: '📱' },
-            { name: 'Producto 2', price: 15.50, image: '💻' },
-            { name: 'Producto 3', price: 8.75, image: '🎧' },
-            { name: 'Producto 4', price: 12.00, image: '⌚' }
-        ];
-        
-        sampleProducts.forEach(product => {
-            const productCard = document.createElement('div');
-            productCard.className = 'product-card';
-            
-            productCard.innerHTML = `
-                <div class="product-image">${product.image}</div>
-                <h4>${product.name}</h4>
-                <div class="product-price">$${product.price.toFixed(2)}</div>
-                <p>Producto desde carpeta local</p>
-                <button class="btn-add-to-cart">
-                    <i class="fas fa-cart-plus"></i> Agregar
-                </button>
-            `;
-            
-            productCard.querySelector('.btn-add-to-cart').addEventListener('click', () => {
-                this.addToCart(product);
-            });
-            
-            productsGrid.appendChild(productCard);
-        });
-    }
-    
-    addToCart(product) {
-        // Implementar carrito
-        this.showNotification(`${product.name} agregado al carrito`, 'success');
-    }
-    
-    activateStore() {
-        const storeName = document.getElementById('store-name').value || 'Mi Tienda Local';
-        const currency = document.getElementById('currency-select').value;
-        
-        document.getElementById('store-preview').classList.remove('hidden');
-        document.getElementById('store-cart').classList.remove('hidden');
-        
-        // Generar QR para la tienda
-        const storeData = {
-            store: storeName,
-            currency: currency,
-            owner: this.userName,
-            timestamp: Date.now(),
-            type: 'local-store'
-        };
-        
-        const qrContainer = document.getElementById('store-qrcode');
-        qrContainer.innerHTML = '';
-        
-        new QRCode(qrContainer, {
-            text: JSON.stringify(storeData),
-            width: 128,
-            height: 128,
-            colorDark: '#00ffff',
-            colorLight: '#0a0a0a'
-        });
-        
-        // Efecto neón en el QR de la tienda
-        qrContainer.querySelector('canvas').style.filter = 'drop-shadow(0 0 10px rgba(0, 255, 255, 0.7))';
-        
-        this.showNotification('Tienda activada. Comparte el código QR.', 'success');
-    }
-    
-    // Utilidades
     formatFileSize(bytes) {
         if (bytes === 0) return '0 Bytes';
         const k = 1024;
@@ -543,78 +403,400 @@ class LocalBridgeApp {
         return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
     }
     
-    copyRoomCode() {
-        const code = document.getElementById('room-code').textContent;
-        navigator.clipboard.writeText(code)
-            .then(() => this.showNotification('Código copiado al portapapeles', 'success'))
-            .catch(() => this.showNotification('Error al copiar código', 'error'));
+    clearFiles() {
+        const fileList = document.getElementById('local-files');
+        fileList.innerHTML = `
+            <div class="empty-state">
+                <i class="fas fa-cloud-upload-alt"></i>
+                <p>Arrastra archivos o haz clic en "Agregar Archivos"</p>
+            </div>
+        `;
+        this.updateTransferStats();
+    }
+    
+    updateTransferStats() {
+        const fileList = document.getElementById('local-files');
+        const fileItems = fileList.querySelectorAll('.file-item');
+        
+        let totalSize = 0;
+        fileItems.forEach(item => {
+            const size = parseInt(item.dataset.fileSize) || 0;
+            totalSize += size;
+        });
+        
+        document.getElementById('file-count').textContent = `${fileItems.length} archivos`;
+        document.getElementById('total-size').textContent = this.formatFileSize(totalSize);
+        
+        // Habilitar botón de enviar si hay archivos
+        const sendButton = document.getElementById('btn-send-files');
+        sendButton.disabled = fileItems.length === 0;
+    }
+    
+    async sendFiles() {
+        const fileList = document.getElementById('local-files');
+        const fileItems = fileList.querySelectorAll('.file-item');
+        
+        if (fileItems.length === 0) return;
+        
+        // Recopilar archivos
+        const files = [];
+        fileItems.forEach(item => {
+            const fileName = item.dataset.fileName;
+            // En una implementación real, aquí se obtendrían los objetos File
+            // Por ahora, simulamos
+            files.push({
+                name: fileName,
+                size: parseInt(item.dataset.fileSize) || 0,
+                type: this.getFileType(fileName)
+            });
+        });
+        
+        try {
+            // Enviar archivos via WebRTC
+            await this.webrtcBridge.sendFiles(files);
+            this.showNotification('Archivos enviados', 'success');
+        } catch (error) {
+            console.error('Error enviando archivos:', error);
+            this.showNotification('Error al enviar archivos: ' + error.message, 'error');
+        }
+    }
+    
+    getFileType(fileName) {
+        const ext = fileName.split('.').pop().toLowerCase();
+        const mimeTypes = {
+            'jpg': 'image/jpeg',
+            'jpeg': 'image/jpeg',
+            'png': 'image/png',
+            'gif': 'image/gif',
+            'pdf': 'application/pdf',
+            'doc': 'application/msword',
+            'docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            'xls': 'application/vnd.ms-excel',
+            'xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        };
+        return mimeTypes[ext] || 'application/octet-stream';
+    }
+    
+    toggleChat() {
+        const chatWindow = document.getElementById('chat-window');
+        chatWindow.classList.toggle('hidden');
+        
+        if (!chatWindow.classList.contains('hidden')) {
+            // Enfocar input de chat
+            document.getElementById('chat-input').focus();
+        }
+    }
+    
+    minimizeChat() {
+        const chatWindow = document.getElementById('chat-window');
+        chatWindow.classList.add('hidden');
+    }
+    
+    closeChat() {
+        const chatWindow = document.getElementById('chat-window');
+        chatWindow.classList.add('hidden');
+    }
+    
+    sendMessage() {
+        const input = document.getElementById('chat-input');
+        const message = input.value.trim();
+        
+        if (!message) return;
+        
+        // Enviar mensaje via WebRTC
+        this.webrtcBridge.sendChatMessage(message);
+        
+        // Añadir mensaje al chat local
+        this.addChatMessage(message, 'sent');
+        
+        // Limpiar input
+        input.value = '';
+    }
+    
+    addChatMessage(message, type) {
+        const chatMessages = document.getElementById('chat-messages');
+        const messageElement = document.createElement('div');
+        messageElement.className = `message ${type}`;
+        
+        const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        
+        messageElement.innerHTML = `
+            <div class="message-content">${message}</div>
+            <div class="message-time">${time}</div>
+        `;
+        
+        chatMessages.appendChild(messageElement);
+        
+        // Scroll al final
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+    
+    onChatMessage(data) {
+        // Añadir mensaje recibido al chat
+        this.addChatMessage(data.text, 'received');
+    }
+    
+    showSettings() {
+        this.showNotification('Configuración - En desarrollo', 'info');
+    }
+    
+    showSecurity() {
+        this.showNotification('Seguridad - En desarrollo', 'info');
     }
     
     showNotification(message, type = 'info') {
         const container = document.getElementById('notification-container');
         const notification = document.createElement('div');
-        
         notification.className = `notification ${type}`;
+        
+        const icon = this.getNotificationIcon(type);
+        
         notification.innerHTML = `
-            <i class="fas fa-${type === 'success' ? 'check-circle' : 
-                               type === 'error' ? 'exclamation-circle' : 
-                               'info-circle'}"></i>
+            <i class="${icon}"></i>
             <span>${message}</span>
         `;
         
-        // Efecto neón en notificaciones
-        if (type === 'success') {
-            notification.style.boxShadow = '0 0 20px rgba(0, 255, 0, 0.5)';
-        } else if (type === 'error') {
-            notification.style.boxShadow = '0 0 20px rgba(255, 0, 0, 0.5)';
-        } else {
-            notification.style.boxShadow = '0 0 20px rgba(0, 255, 255, 0.5)';
-        }
-        
         container.appendChild(notification);
         
-        // Auto-remover después de 5 segundos
+        // Autoeliminar después de 5 segundos
         setTimeout(() => {
-            notification.remove();
+            notification.style.animation = 'slideOut 0.4s ease forwards';
+            setTimeout(() => {
+                container.removeChild(notification);
+            }, 400);
         }, 5000);
     }
     
-    initializeHostScreen() {
-        console.log('Inicializando pantalla de host');
+    getNotificationIcon(type) {
+        const icons = {
+            success: 'fas fa-check-circle',
+            error: 'fas fa-exclamation-circle',
+            warning: 'fas fa-exclamation-triangle',
+            info: 'fas fa-info-circle'
+        };
+        return icons[type] || icons.info;
     }
     
-    initializeTransferScreen() {
-        console.log('Inicializando pantalla de transferencia');
+    setupDragAndDrop() {
+        const dropZone = document.getElementById('local-files');
+        
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.style.borderColor = 'var(--neon-cyan)';
+        });
+        
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.style.borderColor = '';
+        });
+        
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.style.borderColor = '';
+            
+            const files = e.dataTransfer.files;
+            this.addFilesToQueue(files);
+        });
     }
     
-    initializeStoreScreen() {
-        console.log('Inicializando pantalla de tienda');
+    setupResizeObserver() {
+        const chatWindow = document.getElementById('chat-window');
+        const observer = new ResizeObserver(entries => {
+            for (let entry of entries) {
+                const height = entry.contentRect.height;
+                // Ajustar altura del área de mensajes
+                const messagesArea = chatWindow.querySelector('.chat-messages');
+                if (messagesArea) {
+                    messagesArea.style.height = `${height - 150}px`;
+                }
+            }
+        });
+        
+        observer.observe(chatWindow);
+    }
+    
+    updateFileList() {
+        // Actualizar lista de archivos para la pantalla de transferencia
+        const fileList = document.getElementById('local-files');
+        fileList.innerHTML = `
+            <div class="empty-state">
+                <i class="fas fa-cloud-upload-alt"></i>
+                <p>Arrastra archivos o haz clic en "Agregar Archivos"</p>
+            </div>
+        `;
+        
+        // Habilitar botones según conexión
+        const chatButton = document.getElementById('btn-chat');
+        const filesButton = document.getElementById('btn-files');
+        
+        if (this.webrtcBridge && this.webrtcBridge.dataChannel && this.webrtcBridge.dataChannel.readyState === 'open') {
+            chatButton.disabled = false;
+            filesButton.disabled = false;
+        } else {
+            chatButton.disabled = true;
+            filesButton.disabled = true;
+        }
+    }
+    
+    updateProductsGrid(products) {
+        // Actualizar grid de productos en la tienda
+        const storeScreen = document.getElementById('store-screen');
+        if (!storeScreen) return;
+        
+        const productsGrid = storeScreen.querySelector('.products-grid');
+        if (!productsGrid) return;
+        
+        productsGrid.innerHTML = '';
+        
+        if (products.length === 0) {
+            productsGrid.innerHTML = `
+                <div class="empty-state">
+                    <i class="fas fa-box-open"></i>
+                    <p>No hay productos disponibles</p>
+                </div>
+            `;
+            return;
+        }
+        
+        products.forEach(product => {
+            const productCard = document.createElement('div');
+            productCard.className = 'product-card';
+            
+            productCard.innerHTML = `
+                <div class="product-image">
+                    ${product.preview ? `<img src="${product.preview}" alt="${product.name}">` : '<i class="fas fa-file"></i>'}
+                </div>
+                <div class="product-info">
+                    <h3>${product.name}</h3>
+                    <p class="product-price">$${product.price} ${product.currency}</p>
+                    <button class="btn-add-cart" data-product-id="${product.id}">
+                        <i class="fas fa-cart-plus"></i> Agregar al carrito
+                    </button>
+                </div>
+            `;
+            
+            productsGrid.appendChild(productCard);
+        });
+    }
+    
+    updateCart(cart) {
+        // Actualizar carrito en la interfaz
+        const cartCount = document.getElementById('cart-count');
+        if (cartCount) {
+            cartCount.textContent = cart.reduce((total, item) => total + item.quantity, 0);
+        }
+    }
+    
+    onConnectionSuccess(data) {
+        console.log('Conexión establecida:', data);
+        this.showNotification('Conexión P2P establecida', 'success');
+        
+        // Actualizar estado de conexión
+        const connectionState = document.getElementById('connection-state');
+        if (connectionState) {
+            connectionState.className = 'state-connected';
+            connectionState.innerHTML = `
+                <div class="status-indicator"></div>
+                <span>CONEXIÓN ESTABLECIDA</span>
+            `;
+        }
+        
+        // Habilitar botones
+        document.getElementById('btn-chat').disabled = false;
+        document.getElementById('btn-files').disabled = false;
+    }
+    
+    onConnectionFailed(data) {
+        console.error('Conexión fallida:', data);
+        this.showNotification('Conexión fallida: ' + data.reason, 'error');
+        
+        // Actualizar estado de conexión
+        const connectionState = document.getElementById('connection-state');
+        if (connectionState) {
+            connectionState.className = 'state-disconnected';
+            connectionState.innerHTML = `
+                <div class="status-indicator"></div>
+                <span>CONEXIÓN FALLIDA</span>
+            `;
+        }
+    }
+    
+    onFileIncoming(data) {
+        console.log('Archivo entrante:', data);
+        this.showNotification(`Recibiendo: ${data.name}`, 'info');
+        
+        // Preparar recepción
+        this.fileTransfer.receiveFile(data);
+    }
+    
+    onFileProgress(data) {
+        console.log('Progreso de archivo:', data);
+        
+        // Actualizar barra de progreso
+        const progressContainer = document.getElementById('transfer-progress');
+        if (progressContainer) {
+            progressContainer.classList.remove('hidden');
+            
+            const progressFill = document.getElementById('progress-fill');
+            const progressPercent = document.getElementById('progress-percent');
+            
+            if (progressFill && progressPercent) {
+                progressFill.style.width = `${data.percentage}%`;
+                progressPercent.textContent = `${data.percentage}%`;
+            }
+        }
+    }
+    
+    onFileReceived(data) {
+        console.log('Archivo recibido:', data);
+        this.showNotification(`Archivo recibido: ${data.name}`, 'success');
+        
+        // Ocultar barra de progreso
+        const progressContainer = document.getElementById('transfer-progress');
+        if (progressContainer) {
+            setTimeout(() => {
+                progressContainer.classList.add('hidden');
+            }, 2000);
+        }
+    }
+    
+    onTransferProgress(data) {
+        console.log('Progreso de transferencia:', data);
+    }
+    
+    onTransferComplete(data) {
+        console.log('Transferencia completada:', data);
+        this.showNotification('Transferencia completada', 'success');
+    }
+    
+    onStoreActivated(data) {
+        console.log('Tienda activada:', data);
+    }
+    
+    generateRandomName() {
+        const adjectives = ['Alpha', 'Beta', 'Gamma', 'Delta', 'Epsilon', 'Zeta', 'Eta', 'Theta'];
+        const nouns = ['Bridge', 'Link', 'Node', 'Hub', 'Portal', 'Gateway', 'Path', 'Route'];
+        
+        const adjective = adjectives[Math.floor(Math.random() * adjectives.length)];
+        const noun = nouns[Math.floor(Math.random() * nouns.length)];
+        
+        return `${adjective}${noun}${Math.floor(Math.random() * 1000)}`;
+    }
+    
+    loadSettings() {
+        // Cargar configuración guardada
+        try {
+            const saved = localStorage.getItem('localBridgeSettings');
+            if (saved) {
+                const settings = JSON.parse(saved);
+                this.userName = settings.userName || this.userName;
+            }
+        } catch (error) {
+            console.error('Error cargando configuración:', error);
+        }
     }
 }
 
-// Iniciar aplicación cuando el DOM esté listo
+// Inicializar aplicación cuando DOM esté listo
 document.addEventListener('DOMContentLoaded', () => {
     window.app = new LocalBridgeApp();
-    
-    // Verificar compatibilidad
-    if (!('showOpenFilePicker' in window)) {
-        window.app.showNotification(
-            'Tu navegador puede tener limitaciones. Usa Chrome/Edge 86+ o Firefox 111+ para mejor experiencia.',
-            'warning'
-        );
-    }
-    
-    if (!('RTCPeerConnection' in window)) {
-        window.app.showNotification(
-            'WebRTC no está soportado. No podrás establecer conexiones P2P.',
-            'error'
-        );
-    }
-    
-    // Animación de entrada
-    document.body.style.opacity = '0';
-    setTimeout(() => {
-        document.body.style.transition = 'opacity 1s ease';
-        document.body.style.opacity = '1';
-    }, 100);
 });
