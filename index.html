@@ -20,8 +20,28 @@
     
     <!-- Font Awesome para iconos -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Cursor neón personalizado -->
+    <style>
+        body {
+            cursor: none;
+        }
+        .cursor-glow {
+            position: fixed;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(157, 78, 221, 0.7) 0%, transparent 70%);
+            pointer-events: none;
+            z-index: 9999;
+            transition: transform 0.1s;
+        }
+    </style>
 </head>
 <body>
+    <!-- Cursor neón -->
+    <div class="cursor-glow"></div>
+    
     <!-- Pantalla de inicio -->
     <div id="start-screen" class="screen active">
         <div class="logo-container">
@@ -71,10 +91,10 @@
                 <p class="hint">Comparte este código con la otra persona</p>
                 
                 <div class="connection-options">
-                    <button id="btn-copy-code" class="btn-small">
+                    <button id="btn-copy-code" class="btn-copy-code">
                         <i class="fas fa-copy"></i> Copiar Código
                     </button>
-                    <button id="btn-share-link" class="btn-small">
+                    <button id="btn-share-link" class="btn-share-link">
                         <i class="fas fa-share-alt"></i> Compartir Enlace
                     </button>
                 </div>
@@ -129,7 +149,7 @@
                 <h3>O escanear código QR:</h3>
                 <div class="qr-reader">
                     <video id="qr-video" width="300" height="200" class="hidden"></video>
-                    <button id="btn-start-qr" class="btn-small">
+                    <button id="btn-start-qr" class="btn-secondary">
                         <i class="fas fa-qrcode"></i> Escanear QR
                     </button>
                     <div id="qr-result" class="hidden"></div>
@@ -210,7 +230,7 @@
                 
                 <div class="form-group">
                     <label>Seleccionar Carpeta de Productos:</label>
-                    <button id="btn-select-store-folder" class="btn-small">
+                    <button id="btn-select-store-folder" class="btn-secondary">
                         <i class="fas fa-folder-open"></i> Elegir Carpeta
                     </button>
                     <span id="store-folder-path">No seleccionada</span>
@@ -239,8 +259,8 @@
                 
                 <div class="store-sharing">
                     <h4>Compartir Tienda:</h4>
-                    <div id="store-qrcode" class="qrcode-small"></div>
-                    <button id="btn-copy-store-link" class="btn-small">
+                    <div id="store-qrcode" class="qrcode"></div>
+                    <button id="btn-copy-store-link" class="btn-copy-code">
                         <i class="fas fa-link"></i> Copiar Enlace de Tienda
                     </button>
                 </div>
@@ -300,6 +320,31 @@
         
         // Hacer la configuración global
         window.APP_CONFIG = CONFIG;
+        
+        // Cursor neón personalizado
+        document.addEventListener('DOMContentLoaded', () => {
+            const cursor = document.querySelector('.cursor-glow');
+            
+            document.addEventListener('mousemove', (e) => {
+                cursor.style.left = e.clientX - 10 + 'px';
+                cursor.style.top = e.clientY - 10 + 'px';
+            });
+            
+            // Efecto hover en elementos interactivos
+            const interactiveElements = document.querySelectorAll('button, a, input, .file-item, .product-card');
+            
+            interactiveElements.forEach(element => {
+                element.addEventListener('mouseenter', () => {
+                    cursor.style.transform = 'scale(1.5)';
+                    cursor.style.background = 'radial-gradient(circle, rgba(0, 255, 255, 0.8) 0%, transparent 70%)';
+                });
+                
+                element.addEventListener('mouseleave', () => {
+                    cursor.style.transform = 'scale(1)';
+                    cursor.style.background = 'radial-gradient(circle, rgba(157, 78, 221, 0.7) 0%, transparent 70%)';
+                });
+            });
+        });
     </script>
 </body>
 </html>
