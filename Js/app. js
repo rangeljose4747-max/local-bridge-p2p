@@ -1,4 +1,4 @@
-// Aplicación principal Local Bridge P2P
+// Aplicación principal Local Bridge P2P con tema neón
 
 class LocalBridgeApp {
     constructor() {
@@ -16,6 +16,9 @@ class LocalBridgeApp {
         this.userName = this.generateRandomName();
         this.fileTransfers = new Map();
         
+        // Inicializar efectos neón
+        this.initNeonEffects();
+        
         this.initialize();
     }
     
@@ -23,6 +26,58 @@ class LocalBridgeApp {
         this.bindEvents();
         this.setupNavigation();
         this.showNotification('Aplicación cargada. Listo para conectar.', 'info');
+        
+        // Animación de carga neón
+        this.showLoadingAnimation();
+    }
+    
+    initNeonEffects() {
+        // Efecto de neón en títulos
+        const titles = document.querySelectorAll('h1, h2, h3');
+        titles.forEach(title => {
+            title.style.textShadow = '0 0 10px rgba(157, 78, 221, 0.8)';
+        });
+        
+        // Efecto de neón en botones
+        const buttons = document.querySelectorAll('button');
+        buttons.forEach(button => {
+            button.style.transition = 'all 0.3s ease';
+            button.addEventListener('mouseenter', () => {
+                button.style.boxShadow = '0 0 15px rgba(157, 78, 221, 0.6)';
+            });
+            button.addEventListener('mouseleave', () => {
+                button.style.boxShadow = '';
+            });
+        });
+        
+        // Efecto de neón en campos de entrada
+        const inputs = document.querySelectorAll('input, select');
+        inputs.forEach(input => {
+            input.style.transition = 'all 0.3s ease';
+            input.addEventListener('focus', () => {
+                input.style.boxShadow = '0 0 15px rgba(0, 255, 255, 0.5)';
+            });
+            input.addEventListener('blur', () => {
+                input.style.boxShadow = '';
+            });
+        });
+    }
+    
+    showLoadingAnimation() {
+        const loading = document.createElement('div');
+        loading.className = 'loading-neon';
+        loading.innerHTML = `
+            <div class="loader">
+                <div class="circle"></div>
+                <div class="circle"></div>
+                <div class="circle"></div>
+            </div>
+        `;
+        document.body.appendChild(loading);
+        
+        setTimeout(() => {
+            loading.remove();
+        }, 1500);
     }
     
     bindEvents() {
@@ -122,10 +177,13 @@ class LocalBridgeApp {
                 text: JSON.stringify(roomData),
                 width: 256,
                 height: 256,
-                colorDark: '#2563eb',
-                colorLight: '#ffffff',
+                colorDark: '#9d4edd',
+                colorLight: '#0a0a0a',
                 correctLevel: QRCode.CorrectLevel.H
             });
+            
+            // Efecto neón en el código QR
+            qrContainer.querySelector('canvas').style.filter = 'drop-shadow(0 0 10px rgba(157, 78, 221, 0.7))';
             
             // Iniciar WebRTC para esperar conexiones
             await this.initializeWebRTC(true);
@@ -200,13 +258,18 @@ class LocalBridgeApp {
     }
     
     onConnectionEstablished() {
-        document.getElementById('connection-state').className = 'state-connected';
-        document.getElementById('connection-state').innerHTML = 
+        const stateElement = document.getElementById('connection-state');
+        stateElement.className = 'state-connected';
+        stateElement.innerHTML = 
             '<i class="fas fa-check-circle"></i> Conectado P2P';
         
-        // Habilitar botones
+        // Efecto neón en el estado de conexión
+        stateElement.style.animation = 'neon-pulse 2s infinite';
+        
+        // Habilitar botones con efecto neón
         document.querySelectorAll('.btn-action').forEach(btn => {
             btn.disabled = false;
+            btn.classList.add('neon-pulse');
         });
         
         // Mostrar chat automáticamente
@@ -289,7 +352,7 @@ class LocalBridgeApp {
         // Implementar envío real via WebRTC
         this.showNotification('Enviando archivos directamente al peer...', 'info');
         
-        // Simular progreso
+        // Simular progreso con efecto neón
         this.showTransferProgress();
         
         setTimeout(() => {
@@ -302,11 +365,13 @@ class LocalBridgeApp {
         const progress = document.getElementById('transfer-progress');
         progress.classList.remove('hidden');
         
-        // Simular progreso
+        // Simular progreso con efecto neón
         let percent = 0;
         const interval = setInterval(() => {
             percent += 5;
-            document.getElementById('progress-fill').style.width = `${percent}%`;
+            const progressFill = document.getElementById('progress-fill');
+            progressFill.style.width = `${percent}%`;
+            progressFill.style.background = `linear-gradient(90deg, #9d4edd, #00ffff)`;
             document.getElementById('progress-text').textContent = `${percent}%`;
             
             if (percent >= 100) {
@@ -316,7 +381,8 @@ class LocalBridgeApp {
     }
     
     hideTransferProgress() {
-        document.getElementById('transfer-progress').classList.add('hidden');
+        const progress = document.getElementById('transfer-progress');
+        progress.classList.add('hidden');
         document.getElementById('progress-fill').style.width = '0%';
         document.getElementById('progress-text').textContent = '0%';
     }
@@ -326,6 +392,8 @@ class LocalBridgeApp {
         const chatWindow = document.getElementById('chat-window');
         if (show) {
             chatWindow.classList.remove('hidden');
+            // Efecto neón en el chat
+            chatWindow.style.boxShadow = '0 0 20px rgba(157, 78, 221, 0.5)';
         } else {
             chatWindow.classList.add('hidden');
         }
@@ -337,7 +405,7 @@ class LocalBridgeApp {
         
         if (!message) return;
         
-        // Agregar mensaje localmente
+        // Agregar mensaje localmente con efecto neón
         this.addMessageToChat(message, true);
         
         // Enviar via WebRTC (simulado por ahora)
@@ -357,6 +425,11 @@ class LocalBridgeApp {
         
         messageDiv.className = `message ${isSent ? 'sent' : 'received'}`;
         messageDiv.textContent = message;
+        
+        // Efecto neón en mensajes enviados
+        if (isSent) {
+            messageDiv.style.boxShadow = '0 0 10px rgba(157, 78, 221, 0.3)';
+        }
         
         messagesContainer.appendChild(messageDiv);
         messagesContainer.scrollTop = messagesContainer.scrollHeight;
@@ -451,9 +524,12 @@ class LocalBridgeApp {
             text: JSON.stringify(storeData),
             width: 128,
             height: 128,
-            colorDark: '#10b981',
-            colorLight: '#ffffff'
+            colorDark: '#00ffff',
+            colorLight: '#0a0a0a'
         });
+        
+        // Efecto neón en el QR de la tienda
+        qrContainer.querySelector('canvas').style.filter = 'drop-shadow(0 0 10px rgba(0, 255, 255, 0.7))';
         
         this.showNotification('Tienda activada. Comparte el código QR.', 'success');
     }
@@ -485,6 +561,15 @@ class LocalBridgeApp {
                                'info-circle'}"></i>
             <span>${message}</span>
         `;
+        
+        // Efecto neón en notificaciones
+        if (type === 'success') {
+            notification.style.boxShadow = '0 0 20px rgba(0, 255, 0, 0.5)';
+        } else if (type === 'error') {
+            notification.style.boxShadow = '0 0 20px rgba(255, 0, 0, 0.5)';
+        } else {
+            notification.style.boxShadow = '0 0 20px rgba(0, 255, 255, 0.5)';
+        }
         
         container.appendChild(notification);
         
@@ -525,4 +610,11 @@ document.addEventListener('DOMContentLoaded', () => {
             'error'
         );
     }
+    
+    // Animación de entrada
+    document.body.style.opacity = '0';
+    setTimeout(() => {
+        document.body.style.transition = 'opacity 1s ease';
+        document.body.style.opacity = '1';
+    }, 100);
 });
