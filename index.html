@@ -13,86 +13,13 @@
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    <!-- CSS -->
+    <!-- CSS UNIFICADO -->
     <link rel="stylesheet" href="css/style.css">
     
     <!-- Fuentes modernas -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
-    
-    <style>
-        /* Estilos adicionales para fuentes neon */
-        h1, h2, h3, .logo-container h1, .header h2 {
-            font-family: 'Orbitron', sans-serif;
-        }
-        
-        .code-display {
-            font-family: 'Orbitron', monospace;
-            text-shadow: 0 0 10px #00ffff, 0 0 20px #00ffff;
-        }
-        
-        /* Animación de fondo neon */
-        .neon-bg {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: -1;
-            opacity: 0.1;
-            background: 
-                radial-gradient(circle at 20% 50%, #ff00ff22 0%, transparent 50%),
-                radial-gradient(circle at 80% 20%, #00ffff22 0%, transparent 50%),
-                radial-gradient(circle at 40% 80%, #9d4edd22 0%, transparent 50%);
-            animation: pulse 10s ease-in-out infinite alternate;
-        }
-        
-        @keyframes pulse {
-            0% { opacity: 0.05; }
-            100% { opacity: 0.15; }
-        }
-        
-        /* Efecto brillo para botones */
-        .btn-primary, .btn-store, .btn-send {
-            position: relative;
-            overflow: hidden;
-        }
-        
-        .btn-primary::after, .btn-store::after, .btn-send::after {
-            content: '';
-            position: absolute;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
-            background: radial-gradient(circle, rgba(255,255,255,0.3) 0%, transparent 70%);
-            opacity: 0;
-            transition: opacity 0.3s;
-        }
-        
-        .btn-primary:hover::after, .btn-store:hover::after, .btn-send:hover::after {
-            opacity: 1;
-        }
-        
-        /* Scrollbar personalizado */
-        ::-webkit-scrollbar {
-            width: 8px;
-        }
-        
-        ::-webkit-scrollbar-track {
-            background: #1a1a1a;
-        }
-        
-        ::-webkit-scrollbar-thumb {
-            background: linear-gradient(180deg, #9d4edd, #00ffff);
-            border-radius: 4px;
-        }
-        
-        ::-webkit-scrollbar-thumb:hover {
-            background: linear-gradient(180deg, #ff00ff, #00ffff);
-        }
-    </style>
 </head>
 <body>
     <!-- Fondo animado -->
@@ -185,10 +112,10 @@
                     <div id="qrcode-container" class="qrcode"></div>
                     
                     <div class="code-actions">
-                        <button id="btn-copy-code" class="btn-copy-code">
+                        <button id="btn-copy-code" class="btn-primary">
                             <i class="fas fa-copy"></i> COPIAR CÓDIGO
                         </button>
-                        <button id="btn-share-link" class="btn-share-link">
+                        <button id="btn-share-link" class="btn-secondary">
                             <i class="fas fa-share-alt"></i> COMPARTIR ENLACE
                         </button>
                         <button id="btn-refresh-code" class="btn-action-small">
@@ -327,7 +254,7 @@
                         <button id="btn-send-files" class="btn-send" disabled>
                             <i class="fas fa-paper-plane"></i> ENVIAR ARCHIVOS
                         </button>
-                        <button id="btn-set-permissions" class="btn-permissions">
+                        <button id="btn-set-permissions" class="btn-action">
                             <i class="fas fa-user-lock"></i> PERMISOS
                         </button>
                         
@@ -420,7 +347,7 @@
     <!-- Notificaciones neon -->
     <div id="notification-container"></div>
     
-    <!-- Scripts -->
+    <!-- Scripts (SIN DUPLICADOS) -->
     <script src="lib/webrtc-adapter.js"></script>
     <script src="lib/qrcode.min.js"></script>
     <script src="js/webrtc-bridge.js"></script>
@@ -503,103 +430,6 @@
                 });
             }
         }
-        
-        // Estilos CSS dinámicos para efectos neon
-        const neonStyles = document.createElement('style');
-        neonStyles.textContent = `
-            @keyframes neonPulse {
-                0% { text-shadow: 0 0 5px #00ffff, 0 0 10px #00ffff; }
-                100% { text-shadow: 0 0 10px #00ffff, 0 0 20px #00ffff, 0 0 30px #00ffff; }
-            }
-            
-            @keyframes neonBorder {
-                0% { border-color: #9d4edd; }
-                50% { border-color: #00ffff; }
-                100% { border-color: #ff00ff; }
-            }
-            
-            .neon-theme .code-display {
-                animation: neonPulse 2s infinite alternate;
-            }
-            
-            .neon-theme .file-list {
-                border: 1px solid;
-                animation: neonBorder 3s infinite alternate;
-            }
-            
-            .neon-text {
-                color: #00ffff;
-                text-shadow: 0 0 5px #00ffff;
-                font-weight: bold;
-            }
-            
-            .tech-tag {
-                background: rgba(157, 78, 221, 0.1);
-                border: 1px solid #9d4edd;
-                color: #9d4edd;
-                padding: 0.25rem 0.75rem;
-                border-radius: 20px;
-                font-size: 0.85rem;
-                display: inline-flex;
-                align-items: center;
-                gap: 0.25rem;
-                margin: 0.25rem;
-            }
-            
-            .quick-stats {
-                display: grid;
-                grid-template-columns: repeat(3, 1fr);
-                gap: 1rem;
-                margin: 1.5rem 0;
-            }
-            
-            .stat-item {
-                display: flex;
-                align-items: center;
-                gap: 0.5rem;
-                color: #00ffff;
-                font-size: 0.9rem;
-            }
-            
-            .tech-stack {
-                display: flex;
-                justify-content: center;
-                flex-wrap: wrap;
-                margin: 2rem 0;
-            }
-            
-            .input-wrapper {
-                position: relative;
-            }
-            
-            .input-decoration {
-                position: absolute;
-                bottom: 0;
-                left: 0;
-                right: 0;
-                height: 2px;
-                background: linear-gradient(90deg, #9d4edd, #00ffff);
-                transform: scaleX(0);
-                transition: transform 0.3s;
-            }
-            
-            .focused .input-decoration {
-                transform: scaleX(1);
-            }
-            
-            .empty-state {
-                text-align: center;
-                padding: 3rem 2rem;
-                color: #666;
-            }
-            
-            .empty-state i {
-                font-size: 3rem;
-                color: #444;
-                margin-bottom: 1rem;
-            }
-        `;
-        document.head.appendChild(neonStyles);
     </script>
 </body>
 </html>
